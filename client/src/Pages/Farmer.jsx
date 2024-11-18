@@ -177,7 +177,7 @@ const FarmerDashboard = ({ onLogout }) => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <h3 className="text-2xl font-bold text-green-800">$0.00</h3>
+                <h3 className="text-2xl font-bold text-green-800">₹0.00</h3>
               </div>
             </CardContent>
           </Card>
@@ -209,7 +209,7 @@ const FarmerDashboard = ({ onLogout }) => {
                       className="w-full h-48 object-cover rounded-md mb-4"
                     />
                     <h3 className="font-semibold text-lg text-green-800">{product.productName}</h3>
-                    <p className="text-green-600 font-medium">${product.productPrice}</p>
+                    <p className="text-green-600 font-medium">₹{product.productPrice}</p>
                     <p className="text-gray-600">Type: {product.productType}</p>
                   </CardContent>
                 </Card>
@@ -227,80 +227,83 @@ const FarmerDashboard = ({ onLogout }) => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleAddProduct} className="space-y-4">
-                  <Input
-                    type="file"
-                    onChange={(e) => setNewProduct({...newProduct, imageFile: e.target.files[0]})}
-                    className="border-green-200 focus:ring-green-500"
-                    required
-                  />
-                  <Input
-                    placeholder="Product Type"
-                    value={newProduct.productType}
-                    onChange={(e) => setNewProduct({...newProduct, productType: e.target.value})}
-                    className="border-green-200 focus:ring-green-500"
-                    required
-                  />
-                  <Input
-                    placeholder="Product Name"
-                    value={newProduct.productName}
-                    onChange={(e) => setNewProduct({...newProduct, productName: e.target.value})}
-                    className="border-green-200 focus:ring-green-500"
-                    required
-                  />
-                  <Input
-                    placeholder="Product Description"
-                    value={newProduct.description}
-                    onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-                    className="border-green-200 focus:ring-green-500"
-                    required
-                  />
-                  <Input
-                    type="date"
-                    placeholder="Packed Date"
-                    value={newProduct.productPacked}
-                    onChange={(e) => setNewProduct({...newProduct, productPacked: e.target.value})}
-                    className="border-green-200 focus:ring-green-500"
-                    required
-                  />
-                  <Input
-                    type="date"
-                    placeholder="Expiry Date"
-                    value={newProduct.productExpire}
-                    onChange={(e) => setNewProduct({...newProduct, productExpire: e.target.value})}
-                    className="border-green-200 focus:ring-green-500"
-                    required
-                  />
-                  <Input
-                    placeholder="Product Price"
-                    value={newProduct.productPrice}
-                    onChange={(e) => setNewProduct({...newProduct, productPrice: e.target.value})}
-                    className="border-green-200 focus:ring-green-500"
-                    required
-                  />
-                  <Input
-                    placeholder="Web3 ID"
-                    value={newProduct.web3Id}
-                    onChange={(e) => setNewProduct({...newProduct, web3Id: e.target.value})}
-                    className="border-green-200 focus:ring-green-500"
-                    required
-                  />
-                  <Input
-                    placeholder="Contract Address"
-                    value={newProduct.contractAddress}
-                    onChange={(e) => setNewProduct({...newProduct, contractAddress: e.target.value})}
-                    className="border-green-200 focus:ring-green-500"
-                    required
-                  />
-                  <Button type="submit" className="w-full bg-green-600 text-white hover:bg-green-700">
-                    Add Product
-                  </Button>
-                </form>
-              </CardContent>
+  <form onSubmit={handleAddProduct} className="space-y-4">
+    <Input
+      type="file"
+      onChange={(e) => setNewProduct({...newProduct, imageFile: e.target.files[0]})}
+      className="border-green-200 focus:ring-green-500"
+      required
+    />
+    <Input
+      placeholder="Product Type"
+      value={newProduct.productType}
+      onChange={(e) => setNewProduct({...newProduct, productType: e.target.value})}
+      className="border-green-200 focus:ring-green-500"
+      required
+    />
+    <Input
+      placeholder="Product Name"
+      value={newProduct.productName}
+      onChange={(e) => setNewProduct({...newProduct, productName: e.target.value})}
+      className="border-green-200 focus:ring-green-500"
+      required
+    />
+    <textarea
+      placeholder="Product Description"
+      value={newProduct.description}
+      onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+      className="w-full p-2 border border-green-200 rounded-md focus:ring-green-500"
+      rows="4"
+      required
+    ></textarea>
+    <Input
+      type="date"
+      placeholder="Packed Date"
+      value={newProduct.productPacked}
+      onChange={(e) => setNewProduct({...newProduct, productPacked: e.target.value})}
+      className="border-green-200 focus:ring-green-500"
+      required
+    />
+    <Input
+      type="date"
+      placeholder="Expire Date"
+      value={newProduct.productExpire}
+      onChange={(e) => setNewProduct({...newProduct, productExpire: e.target.value})}
+      className="border-green-200 focus:ring-green-500"
+      required
+    />
+    <Input
+      placeholder="Product Price (in ₹)"
+      value={newProduct.productPrice}
+      onChange={(e) => setNewProduct({...newProduct, productPrice: e.target.value})}
+      className="border-green-200 focus:ring-green-500"
+      required
+    />
+    <Input
+      placeholder="Web3 ID"
+      value={newProduct.web3Id}
+      onChange={(e) => setNewProduct({...newProduct, web3Id: e.target.value})}
+      className="border-green-200 focus:ring-green-500"
+    />
+    <Input
+      placeholder="Contract Address"
+      value={newProduct.contractAddress}
+      onChange={(e) => setNewProduct({...newProduct, contractAddress: e.target.value})}
+      className="border-green-200 focus:ring-green-500"
+    />
+    <Button
+      type="submit"
+      variant="green"
+      className="w-full bg-green-500 text-white hover:bg-green-600"
+    >
+      Add Product
+    </Button>
+  </form>
+</CardContent>
+
             </Card>
           </TabsContent>
 
-          {/* Orders Tab */}
           <TabsContent value="orders">
             <Card className="bg-white/90">
               <CardHeader>

@@ -39,7 +39,7 @@ const productSchema = new Schema({
     type: String,
     required: true,
   },
-  creator: { type: Types.ObjectId, required: true, ref: "Seller" },
+  creator: { type: Types.ObjectId, required: true, ref: "User" },
   productPurchased: [
     {
       buyer: {

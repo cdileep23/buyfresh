@@ -38,55 +38,61 @@ import { fileUpload, fileDelete } from "../middleware/fileUpload.js";
   
 
   //get products added by a  seller
- export const getSellerProducts = async (req, res) => {
+  export const getSellerProducts = async (req, res) => {
     try {
-      // Find the seller based on the userId provided by the middleware
-      const sellerWithProducts = await User.findOne({
-        userId: req.userId, // Use req.user.id for the user ID
-      }).populate("products");
+      // Assuming req.user.id is set by your authentication middleware to the seller's user ID
+      const sellerId = req.userId;
   
-      // If no seller is found, return a 404 error
-      if (!sellerWithProducts) {
-        return res.status(404).json({ message: "Seller not found" });
+      // Find products with creator field matching the seller's ID
+      const products = await productModel.find({ creator: sellerId });
+  
+      // If no products are found, return a 404 error
+      if (!products || products.length === 0) {
+        return res.status(404).json({ message: "No products found for this seller" });
       }
   
       // Respond with the seller's products
-      res.status(200).json({
-        products: sellerWithProducts.products,
-      });
+      res.status(200).json({ products });
     } catch (err) {
-      console.log("err from seller")
+      console.log("Error from seller:", err.message);
       res.status(500).json({ message: err.message });
     }
   };
+
 
 
   //get all products of all sellers
   export const getAllProducts = async (req, res) => {
     try {
-      // Query the Product collection to get all products with their seller information
-      const allProducts = await Product.find().populate("sellerId"); // Assuming "sellerId" refers to the User model
+      // Fetch all products with their creator info, filtering for farmers only
+      const allProducts = await productModel
+        .find()
+        
+  
+        console.log("hello from dil")
+      // Filter out products where the creator is not a farmer
+      const filteredProducts = allProducts.filter(product => product.creator !== null);
   
       // If no products are found, return a 404 error
-      if (!allProducts || allProducts.length === 0) {
-        return res.status(404).json({ message: "No products found" });
+      if (!filteredProducts || filteredProducts.length === 0) {
+        return res.status(404).json({ message: "No products found from farmers", success: false });
       }
   
-      // Respond with all products
+      // Respond with the filtered products
       res.status(200).json({
-        products: allProducts,
+        products: filteredProducts,
+        success: true,
       });
     } catch (err) {
-      res.status(500).json({ message: err.message });
+      res.status(500).json({ message: err.message, success: false });
     }
   };
-  
 
    //get seller added single  products
   export const getSellerSingleProduct = async (req, res) => {
     try {
       // Find the product by its ID
-      const product = await Product.findById(req.params.productId);
+      const product = await productModel.findById(req.params.productId).populate("creator");
   
       // If no product is found, return a 404 error
       if (!product) {
@@ -95,7 +101,10 @@ import { fileUpload, fileDelete } from "../middleware/fileUpload.js";
   
       // Return the found product in the response
       res.status(200).json({
+        message:"successfully retrieved product",
+
         product,
+        success:true
       });
     } catch (err) {
       // Handle any errors that occur during the query
@@ -221,20 +230,22 @@ export const buyProduct = async (req, res) => {
 };
 
 
+
 export const addProduct = async (req, res) => {
   try {
     // Assuming the userId is added to req.user by middleware
     const userId = req.userId;
 
     // Find the seller by userId
-    const seller = await User.findOne({ user: userId });
+    const seller = await User.findById(userId);
+    console.log(seller);
 
-    // If no seller found, send an error response
+    // If no seller is found, send an error response
     if (!seller) {
       return res.status(404).json({ message: "Seller not found", success: false });
     }
 
-    // Now you can create the product using the seller's data
+    // Create the product using the seller's data
     const product = await productModel.create({
       productType: req.body.productType,
       productName: req.body.productName,
@@ -251,16 +262,14 @@ export const addProduct = async (req, res) => {
     // Save the product
     await product.save();
 
-    // Add the product to the seller's list of products
-    seller.products.push(product);
+    // Add the product's ID to the seller's list of products
+    seller.products.push(product._id); // Use product._id instead of the entire product
     await seller.save();
 
     // Send success response
     res.status(200).json({ message: "Product Successfully Added", success: true });
-
   } catch (err) {
     console.error(err); // Log error for debugging
     res.status(500).json({ message: "Server error", success: false });
   }
 };
-

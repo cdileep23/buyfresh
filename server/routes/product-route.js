@@ -13,6 +13,8 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from "fs"
 import multer from "multer";
 import cloudinary from 'cloudinary'
+import dotenv from "dotenv"
+dotenv.config()
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -31,9 +33,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 cloudinary.config({ 
-  cloud_name: "dzb0rtckl", 
-  api_key: 213546156719363, 
-  api_secret:  "87nWrjNrG9fkIA-Wnd1hr3YlUfQ"
+  cloud_name: process.env.CLOUD_NAME, 
+  api_key: process.env.CLOUD_API_KEY, 
+  api_secret:process.env.CLOUD_SECRET_KEY
 });
 
 const handleImageUpload = async (req, res, next) => {
@@ -66,13 +68,12 @@ console.log(`file pat          ${imageFile.path}`)
 
 const router = Router();
 router.route("/:productId/rating")
-  .post(isAuthenticated, addRatingForProducts); // Authenticate the user before adding the rating
+  .post(isAuthenticated, addRatingForProducts);
 
-// Get all products from all sellers
 router.route('/').get(isAuthenticated,getAllProducts);
 
-// Get products added by a specific seller
-router.route("/getallproductsbyseller").get(isAuthenticated,getSellerProducts); // Uses req.user.id from middleware
+
+router.route("/getallproductsbyseller").get(isAuthenticated,getSellerProducts); 
 
 
 router.route("/seller/:productId").get(isAuthenticated,getSellerSingleProduct); 

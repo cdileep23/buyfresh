@@ -59,6 +59,27 @@ import { fileUpload, fileDelete } from "../middleware/fileUpload.js";
     }
   };
 
+  export const getSellerProductsById = async (req, res) => {
+    try {
+      // Extract sellerId from request parameters
+      const sellerId = req.params.sellerId; // assuming the sellerId is passed as a URL parameter
+    console.log(sellerId)
+      // Find products with creator field matching the seller's ID
+      const products = await productModel.find({ creator: sellerId });
+    console.log(products)
+      // If no products are found, return a 404 error
+      if (!products || products.length === 0) {
+        return res.status(404).json({ message: "No products found for this seller" });
+      }
+    
+      // Respond with the seller's products
+      res.status(200).json({ products, success:true});
+    } catch (err) {
+      console.log("Error from seller:", err.message);
+      res.status(500).json({ message: err.message, success:false });
+    }
+  };
+  
 
 
   //get all products of all sellers

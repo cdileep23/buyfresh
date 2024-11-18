@@ -6,7 +6,8 @@ import {
   addProduct, 
   addRatingForProducts,
   cartProduct, 
-  buyProduct 
+  buyProduct, 
+  getSellerProductsById
 } from "../controllers/product-controller.js";
 import isAuthenticated from "../middleware/isAuthenticated.js";
 import { v4 as uuidv4 } from 'uuid';
@@ -71,6 +72,7 @@ router.route("/:productId/rating")
   .post(isAuthenticated, addRatingForProducts);
 
 router.route('/').get(isAuthenticated,getAllProducts);
+router.route('/seller-by-id/:sellerId').get(isAuthenticated,getSellerProductsById);
 
 
 router.route("/getallproductsbyseller").get(isAuthenticated,getSellerProducts); 

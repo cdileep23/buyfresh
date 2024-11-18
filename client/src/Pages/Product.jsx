@@ -8,13 +8,14 @@ import axios from 'axios';
 const ProductDetails = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [otherProducts, setOtherProducts] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchProductDetails();
-  }, []);
+  }, [id]);
 
   const fetchProductDetails = async () => {
     try {
@@ -23,6 +24,9 @@ const ProductDetails = () => {
       });
       if (response.data.success) {
         setProduct(response.data.product);
+        console.log(response.data.product.creator._id)
+        fetchOtherProducts(response.data.product.creator._id)
+     // Fetch other products from the same seller
       } else {
         console.error('Failed to fetch product details:', response.data.message);
       }
@@ -31,6 +35,22 @@ const ProductDetails = () => {
     }
   };
 
+  const fetchOtherProducts = async (sellerId) => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/product/seller-by-id/${sellerId}`, {
+        withCredentials: true,
+      });
+      console.log('Fetched other products:', response.data);  // Check the response
+      if (response.data.success) {
+        setOtherProducts(response.data.products);
+      } else {
+        console.error('Failed to fetch other products:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching other products:', error);
+    }
+  };
+  
   const handleLogout = async () => {
     try {
       const res = await axios.get('http://localhost:8080/api/user/logout', { withCredentials: true });
@@ -131,47 +151,74 @@ const ProductDetails = () => {
       <div className="container mx-auto px-4 py-6">
         {product ? (
           <Card className="max-w-3xl mx-auto p-6">
-          <CardContent className="flex flex-col lg:flex-row">
-            {/* Product Image Section */}
-            <div className="lg:w-1/2">
-              <img
-                src={product.productImageUrl}
-                alt={product.productName}
-                className="w-full h-64 object-cover rounded-md mb-4 lg:mb-0"
-              />
-            </div>
-        
-            {/* Product Details Section */}
-            <div className="lg:w-1/2 lg:pl-8">
-              <h1 className="text-3xl font-bold text-green-800 mb-4">{product.productName}</h1>
-              <p className="text-gray-600">{product.description}</p>
-              <p className="text-green-600 font-medium mt-2">Category: {product.productType}</p>
-              <p className="text-gray-500 mt-1">Packed on: {new Date(product.productPacked).toDateString()}</p>
-              <p className="text-gray-500 mt-1">Expires on: {new Date(product.productExpire).toDateString()}</p>
-              <p className="text-green-900 font-bold mt-4 text-lg">₹{product.productPrice}</p>
-              <p className="mt-4 text-gray-600">
-                Seller: <span className="font-semibold">{product.creator.fullname}</span> 
-              </p>
-              <p className="text-gray-600">Address: {product.creator.address}</p>
-        
-              {/* Add to Cart Button */}
-              <div className="mt-6">
-                <Button
-                  variant="default"
-                  onClick={addToCart}
-                  disabled={isAdding}
-                  className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white"
-                >
-                  {isAdding ? 'Adding...' : 'Add to Cart'}
-                </Button>
+            <CardContent className="flex flex-col lg:flex-row">
+              {/* Product Image Section */}
+              <div className="lg:w-1/2">
+                <img
+                  src={product.productImageUrl}
+                  alt={product.productName}
+                  className="w-full h-64 object-cover rounded-md mb-4 lg:mb-0"
+                />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
+
+              {/* Product Details Section */}
+              <div className="lg:w-1/2 lg:pl-8">
+                <h1 className="text-3xl font-bold text-green-800 mb-4">{product.productName}</h1>
+                <p className="text-gray-600">{product.description}</p>
+                <p className="text-green-600 font-medium mt-2">Category: {product.productType}</p>
+                <p className="text-gray-500 mt-1">Packed on: {new Date(product.productPacked).toDateString()}</p>
+                <p className="text-gray-500 mt-1">Expires on: {new Date(product.productExpire).toDateString()}</p>
+                <p className="text-green-900 font-bold mt-4 text-lg">₹{product.productPrice}</p>
+                <p className="mt-4 text-gray-600">
+                  Seller: <span className="font-semibold">{product.creator.fullname}</span>
+                </p>
+                <p className="text-gray-600">Address: {product.creator.address}</p>
+
+                {/* Add to Cart Button */}
+                <div className="mt-6">
+                  <Button
+                    variant="default"
+                    onClick={addToCart}
+                    disabled={isAdding}
+                    className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {isAdding ? 'Adding...' : 'Add to Cart'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <p className="text-center text-gray-600">Loading product details...</p>
         )}
+
+        {/* Other Products of the Seller */}
+      
+              {/* Other Products of the Seller */}
+              <div className="mt-12">
+          <h2 className="text-2xl font-bold text-green-700 mb-6">Other Products from {product?.creator.fullname}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"> {/* Adjusted to grid-cols-4 for more compact display */}
+            {otherProducts.map((prod) => (
+             <Card key={prod._id} className="p-2"> {/* Reduced padding */}
+             <CardContent>
+               <img
+                 src={prod.productImageUrl}
+                 alt={prod.productName}
+                 className="w-full h-32 object-cover mb-4 rounded-md" // Reduced height
+               />
+               <h3 className="text-lg font-semibold text-green-800">{prod.productName}</h3> {/* Reduced font size */}
+               <p className="text-sm text-gray-600">{prod.description}</p> {/* Reduced font size */}
+               <p className="text-green-900 font-bold mt-2">₹{prod.productPrice}</p>
+               <Link to={`/product/${prod._id}`} className="text-green-600 hover:underline mt-4 block text-sm">
+                 View Details
+               </Link>
+             </CardContent>
+           </Card>
+           
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );

@@ -278,7 +278,7 @@ export const getAllOrderEachProduct = async (req, res) => {
 export const getAllOrderFarmers = async (req, res) => {
   try {
     // Use userId from middleware (assuming req.userId is set by the middleware)
-    const seller = await Seller.findOne({ userId: req.userId });
+    const seller = await User.findById(req.userId );
 
     if (!seller) {
       return res.status(404).json({
@@ -286,27 +286,21 @@ export const getAllOrderFarmers = async (req, res) => {
       });
     }
 
-    // Find all orders that include this seller's products
-    const sellerOrders = await Order.find({
-      "products.sellerId": seller._id,
-    }).populate("products.product");
+    // Find all orders that have products with the seller's ID
+    const sellerOrders = await orderModel.find({
+      sellerId: seller._id,
+    }).populate('product'); // Populate the product field with product details
 
     if (!sellerOrders || sellerOrders.length === 0) {
       return res.status(400).json({
-        message: "No orders found",
+        message: "No orders found for this seller",
+        success:false
       });
     }
 
-    // Filter products associated with this specific seller
-    const sellerOrderProducts = sellerOrders.flatMap((order) =>
-      order.products.filter(
-        (product) => product.sellerId.toString() === seller._id.toString()
-      )
-    );
-
     // Construct response
     return res.status(200).json({
-      orders: sellerOrderProducts,
+      orders: sellerOrders,
       sellerInfo: {
         _id: seller._id,
         userId: seller.userId,
@@ -318,11 +312,13 @@ export const getAllOrderFarmers = async (req, res) => {
         paymentAmount: seller.paymentAmount,
         date: seller.date,
       },
+      success:true
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 export const checkToken = (req, res) => {
   try {

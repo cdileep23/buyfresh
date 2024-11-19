@@ -18,6 +18,8 @@ const FarmerDashboard = ({ onLogout }) => {
   const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [revenue, setRevenue] = useState(0);
+
   const [newProduct, setNewProduct] = useState({
     imageFile: null,
     productType: '',
@@ -31,16 +33,30 @@ const FarmerDashboard = ({ onLogout }) => {
   });
   const navigate = useNavigate();
 
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const response = await axios.put(`http://localhost:8080/api/order/${orderId}/updateStatus`, {
+        status: newStatus,
+      });
+
+      const updatedOrder = response.data.order;
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === updatedOrder._id ? { ...order, status: updatedOrder.status } : order
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update order status:", error);
+    }
+  };
+
   const checkUserToken = async () => {
     try {
       const response = await axios.get(
         "http://localhost:8080/api/user/check-user", 
         { withCredentials: true }
       );
-      const data = response.data;
-      console.log(data);
-
-      if (!data.success) {
+      if (!response.data.success) {
         navigate('/login');
       }
     } catch (error) {
@@ -52,6 +68,7 @@ const FarmerDashboard = ({ onLogout }) => {
   useEffect(() => {
     checkUserToken();
     fetchProducts();
+    fetchOrders();
   }, []);
 
   const fetchProducts = async () => {
@@ -59,9 +76,28 @@ const FarmerDashboard = ({ onLogout }) => {
       const response = await axios.get('http://localhost:8080/api/product/getallproductsbyseller', {
         withCredentials: true
       });
-      setProducts(response.data.products); // Assuming your backend returns an array of products
+      setProducts(response.data.products);
     } catch (error) {
       console.error("Error fetching products:", error);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/user/farmer/get-Allorders', {
+        withCredentials: true
+      });
+      console.log(response.data.orders)
+      setOrders(response.data.orders);
+
+      // Calculate revenue
+      const totalRevenue = response.data.orders
+        .filter(order => order.status === 'Delivered')
+        .reduce((sum, order) => sum + order.paymentAmount, 0);
+
+      setRevenue(totalRevenue);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
     }
   };
 
@@ -70,9 +106,6 @@ const FarmerDashboard = ({ onLogout }) => {
       const response = await axios.get("http://localhost:8080/api/user/logout", {
         withCredentials: true
       });
-
-      console.log(response.data);
-
       if (response.data.success) {
         alert(response.data.message);
         navigate('/login');
@@ -98,9 +131,7 @@ const FarmerDashboard = ({ onLogout }) => {
           body: formData
         }
       );
-      
       const data = await response.json();
-      console.log(data);
       alert(data.message);
       setNewProduct({
         imageFile: null,
@@ -112,17 +143,19 @@ const FarmerDashboard = ({ onLogout }) => {
         productPrice: '',
         web3Id: '',
         contractAddress: ''
-      })
-      fetchProducts(); // Reload the products after adding a new one
+      });
+      fetchProducts();
     } catch (error) {
       console.error("Add product error:", error);
       alert("Failed to add product");
     }
   };
 
+  const deliveredOrders = orders.filter(order => order.status === 'Delivered');
+  const otherOrders = orders.filter(order => order.status !== 'Delivered');
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100">
-      {/* Navbar */}
       <nav className="bg-white border-b border-green-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between h-16">
@@ -131,7 +164,6 @@ const FarmerDashboard = ({ onLogout }) => {
               <span className="ml-2 text-xl font-semibold text-green-800">Farmer Dashboard</span>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="text-green-700">{user?.email}</div>
               <Button 
                 variant="ghost" 
                 className="text-green-600 hover:text-green-800 hover:bg-green-50"
@@ -144,9 +176,7 @@ const FarmerDashboard = ({ onLogout }) => {
         </div>
       </nav>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <Card className="bg-white/90">
             <CardContent className="flex items-center p-6">
@@ -166,7 +196,7 @@ const FarmerDashboard = ({ onLogout }) => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Active Orders</p>
-                <h3 className="text-2xl font-bold text-green-800">{orders.length}</h3>
+                <h3 className="text-2xl font-bold text-green-800">{otherOrders.length}</h3>
               </div>
             </CardContent>
           </Card>
@@ -177,13 +207,12 @@ const FarmerDashboard = ({ onLogout }) => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <h3 className="text-2xl font-bold text-green-800">₹0.00</h3>
+                <h3 className="text-2xl font-bold text-green-800">₹{revenue.toFixed(2)}</h3>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Tabs */}
         <Tabs defaultValue="products" className="space-y-6">
           <TabsList className="bg-white/90 p-1 space-x-2">
             <TabsTrigger value="products" className="data-[state=active]:bg-green-100">
@@ -197,10 +226,9 @@ const FarmerDashboard = ({ onLogout }) => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Products Tab */}
           <TabsContent value="products">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
+              {products.map(product => (
                 <Card key={product._id || product.id} className="bg-white/90">
                   <CardContent className="p-4">
                     <img
@@ -210,120 +238,91 @@ const FarmerDashboard = ({ onLogout }) => {
                     />
                     <h3 className="font-semibold text-lg text-green-800">{product.productName}</h3>
                     <p className="text-green-600 font-medium">₹{product.productPrice}</p>
-                    <p className="text-gray-600">Type: {product.productType}</p>
+                    <p className="text-sm text-gray-600 mt-2">{product.description}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
           </TabsContent>
 
-          {/* Add Product Tab */}
           <TabsContent value="add-product">
-            <Card className="bg-white/90">
-              <CardHeader>
-                <CardTitle className="text-green-800">Add New Product</CardTitle>
-                <CardDescription className="text-green-600">
-                  List your new product for customers to purchase
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-  <form onSubmit={handleAddProduct} className="space-y-4">
-    <Input
-      type="file"
-      onChange={(e) => setNewProduct({...newProduct, imageFile: e.target.files[0]})}
-      className="border-green-200 focus:ring-green-500"
-      required
-    />
-    <Input
-      placeholder="Product Type"
-      value={newProduct.productType}
-      onChange={(e) => setNewProduct({...newProduct, productType: e.target.value})}
-      className="border-green-200 focus:ring-green-500"
-      required
-    />
-    <Input
-      placeholder="Product Name"
-      value={newProduct.productName}
-      onChange={(e) => setNewProduct({...newProduct, productName: e.target.value})}
-      className="border-green-200 focus:ring-green-500"
-      required
-    />
-    <textarea
-      placeholder="Product Description"
-      value={newProduct.description}
-      onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-      className="w-full p-2 border border-green-200 rounded-md focus:ring-green-500"
-      rows="4"
-      required
-    ></textarea>
-    <Input
-      type="date"
-      placeholder="Packed Date"
-      value={newProduct.productPacked}
-      onChange={(e) => setNewProduct({...newProduct, productPacked: e.target.value})}
-      className="border-green-200 focus:ring-green-500"
-      required
-    />
-    <Input
-      type="date"
-      placeholder="Expire Date"
-      value={newProduct.productExpire}
-      onChange={(e) => setNewProduct({...newProduct, productExpire: e.target.value})}
-      className="border-green-200 focus:ring-green-500"
-      required
-    />
-    <Input
-      placeholder="Product Price (in ₹)"
-      value={newProduct.productPrice}
-      onChange={(e) => setNewProduct({...newProduct, productPrice: e.target.value})}
-      className="border-green-200 focus:ring-green-500"
-      required
-    />
-    <Input
-      placeholder="Web3 ID"
-      value={newProduct.web3Id}
-      onChange={(e) => setNewProduct({...newProduct, web3Id: e.target.value})}
-      className="border-green-200 focus:ring-green-500"
-    />
-    <Input
-      placeholder="Contract Address"
-      value={newProduct.contractAddress}
-      onChange={(e) => setNewProduct({...newProduct, contractAddress: e.target.value})}
-      className="border-green-200 focus:ring-green-500"
-    />
-    <Button
-      type="submit"
-      variant="green"
-      className="w-full bg-green-500 text-white hover:bg-green-600"
-    >
-      Add Product
-    </Button>
-  </form>
-</CardContent>
-
-            </Card>
+            <form onSubmit={handleAddProduct}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  required
+                  placeholder="Product Name"
+                  value={newProduct.productName}
+                  onChange={(e) => setNewProduct({...newProduct, productName: e.target.value})}
+                />
+                {/* Other form fields */}
+              </div>
+              <Button type="submit" className="mt-6 bg-green-600 hover:bg-green-700 text-white">
+                Add Product
+              </Button>
+            </form>
           </TabsContent>
 
           <TabsContent value="orders">
-            <Card className="bg-white/90">
-              <CardHeader>
-                <CardTitle className="text-green-800">My Orders</CardTitle>
-                <CardDescription className="text-green-600">Manage your orders</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {orders.length > 0 ? (
-                  <ul>
-                    {orders.map((order) => (
-                      <li key={order.id}>
-                        Order ID: {order.id} - {order.status}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No orders found.</p>
-                )}
+            <div className="space-y-6">
+              <h3 className="font-semibold text-xl text-green-800">Delivered Orders</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {deliveredOrders.map(order => (
+              <Card key={order._id} className="bg-white/90">
+              <CardContent className="p-4 flex justify-between items-center">
+                {/* Product Details */}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg text-green-800">
+                    {order.product.productName}
+                  </h3>
+                  <p className="text-sm text-gray-600">Customer: {order.userName}</p>
+                  <p className="text-sm text-gray-600">Amount: ₹{order.paymentAmount}</p>
+                </div>
+            
+                {/* Product Image */}
+                <div className="ml-4">
+                  <img
+                    src={order.product.productImageUrl}
+                    alt={order.product.productName}
+                    className="w-24 h-24 object-cover rounded-md shadow-md"
+                  />
+                </div>
               </CardContent>
             </Card>
+            
+                ))}
+              </div>
+
+              <h3 className="font-semibold text-xl text-green-800">Active Orders</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {otherOrders.map(order => (
+                  <Card key={order._id} className="bg-white/90">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-lg text-green-800">{order.product.productName}</h3>
+                      <p className="text-sm text-gray-600">Customer: {order.userName}</p>
+                      <p className="text-sm text-gray-600">Amount: ₹{order.paymentAmount}</p>
+                      <div className="mt-4 flex space-x-2">
+                        {order.status !== 'Delivered' && (
+                          <>
+                            <Button
+                              variant="outline"
+                              onClick={() => updateOrderStatus(order._id, 'Delivered')}
+                            >
+                              Mark as Delivered
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => updateOrderStatus(order._id, 'Canceled')}
+                            >
+                              Cancel Order
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

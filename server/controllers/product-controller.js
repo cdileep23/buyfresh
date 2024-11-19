@@ -144,44 +144,53 @@ export const cartProduct = async (req, res) => {
     }
 
     // Find the user by ID from the middleware
-    const userExist = await User.findById(req.user.id); // Assuming middleware sets req.user.id
+    const userExist = await User.findById(req.userId); // Assuming middleware sets req.userId
     if (!userExist) {
       return res.status(400).json({ message: "User Not Found" });
     }
 
-    // Check if product is already in the user's cart
-    const index = userExist.cart.findIndex(
+    // Check if the product ID is already in the user's cart
+    const productExistsInCart = userExist.cart.some(
       (item) => item.product.toString() === req.params.productId
     );
 
-    if (index >= 0) {
-      // If the product is already in the cart, update the quantity
-      userExist.cart[index].quantity = req.body.quantity;
-    } else {
-      // If the product is not in the cart, add it with the specified quantity
+    if (!productExistsInCart) {
+      // If the product ID is not in the cart, add it
       userExist.cart.push({
-        product: product._id,
-        quantity: req.body.quantity,
+        product: product._id, // Only storing the product ID
+      });
+
+      // Save the updated user object
+      await userExist.save();
+
+      return res.status(200).json({
+        message: "Product added to cart successfully",
+        cart: userExist.cart,
+        success:true
       });
     }
 
-    // Save the updated user object
-    await userExist.save();
-
+    // If product ID is already in the cart, do nothing
     res.status(200).json({
-      message: "Product added to cart successfully",
+      message: "Product is already in the cart",
       cart: userExist.cart,
+      success:false
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
+ // Import the Product model
+
 export const buyProduct = async (req, res) => {
   try {
-    const user = await User.findOne({
-      phoneNo: req.params.phoneNo,
-    }).populate("cart.product");
+    const userId=req.userId
+    const user = await User.findById(
+    userId).populate("cart.product");
+  
+
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -190,66 +199,54 @@ export const buyProduct = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    const orderProducts = user.cart
-      .filter((cartItem) => cartItem.quantity > 0)
-      .map((cartItem) => ({
+
+    const orders = [];
+ console.log(user.cart)
+    for (let cartItem of user.cart) {
+      console.log(cartItem.product)
+      const order = {
         product: cartItem.product._id,
-        quantity: cartItem.quantity,
-        status: "process",
-        sellerId: cartItem.product.creator,
-      }));
+        status: "Pending", // Default status for the order
+        sellerId: cartItem.product.creator, // Seller of the product
+        userId: user._id,
+        userAddress: user.address,
+        userName:user.fullname,
+        userPhoneNo: user.phoneNumber,
+        walletAddress:cartItem.product.contractAddress,
+        contractAddress: cartItem.product.contractAddress,
+        web3Id: cartItem.product.web3Id,
+        paymentAmount:cartItem.product.productPrice,
+        date: new Date(),
+      };
 
-    const purchasedOrderProducts = {
-      products: orderProducts,
-      userId: user._id,
-      userAddress: req.body.userAddress,
-      userName: req.body.userName,
-      userPhoneNo: req.body.userPhoneNo,
-      contractAddress: req.body.contractAddress,
-      web3Id: req.body.web3Id,
-      paymentAmount: req.body.paymentAmount,
-      date: new Date(),
-    };
-    const orders = await Order.create(purchasedOrderProducts);
+      // Create the order in the database
+      const newOrder = await orderModel.create(order);
+      orders.push(newOrder);
 
-    const purchasedProducts = user.cart.map((cartItem) => ({
-      product: cartItem.product._id,
-      quantity: cartItem.quantity,
-    }));
-
-    const productIds = purchasedProducts.map((product) => product.product);
-    const products = await productModel.find({ _id: { $in: productIds } });
-
-    products.forEach((product) => {
-      const purchasedProduct = purchasedProducts.find(
-        (purchasedProduct) =>
-          purchasedProduct.product.toString() === product._id.toString()
-      );
-
-      if (purchasedProduct) {
+      // Update the product's purchase history
+      const product = await productModel.findById(cartItem.product._id);
+      if (product) {
         product.productPurchased.push({
           buyer: user._id,
-          quantity: purchasedProduct.quantity,
         });
+        await product.save();
       }
-    });
-    user.purchased.push(...purchasedProducts);
+    }
 
     user.cart = [];
-    await Promise.all([
-      user.save(),
-      ...products.map((product) => product.save()),
-    ]);
-
     await user.save();
 
-    res.status(200).json({ message: "Purchase successful" });
+    res.status(200).json({
+      success:true,
+      message: "Purchase successful",
+      orders, // Return the created orders
+    });
+
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: err });
+    res.status(500).json({ message: err.message });
   }
 };
-
 
 
 export const addProduct = async (req, res) => {

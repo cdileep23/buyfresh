@@ -86,7 +86,7 @@ router.route("/seller/createProduct")
 
 
 router.route("/user/:productId/cart")
-  .put(isAuthenticated,cartProduct); 
+  .get(isAuthenticated,cartProduct); 
 
 
 router.route("/user/buyProduct")

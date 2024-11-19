@@ -1,11 +1,13 @@
 // Register a new user
 import User from "../models/user-model.js";
 
-import bcrypt from "bcrypt"
+import bcrypt, { compareSync } from "bcrypt"
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import cookie from "cookie"
 import orderModel from "../models/order-model.js";
+import { ObjectId } from "mongoose";
 
 
 export const register = async (req, res) => {
@@ -223,6 +225,7 @@ export const getCartItems = async (req, res) => {
     res.status(200).json({
       message: "Cart items fetched successfully",
       cart: user.cart,
+      success:true
     });
   } catch (err) {
     console.log(err);
@@ -348,3 +351,61 @@ export const checkToken = (req, res) => {
     });
   }
 };
+
+
+
+// Adjust this path based on your project structure
+
+ // Make sure to import ObjectId if needed
+
+
+
+ export const removeCartProduct = async (req, res) => {
+   try {
+     console.log("Attempting to remove from cart...");
+ 
+     // Ensure the cartItemId parameter is valid
+     const cartItemId = req.params.cartItemId;
+     if (!ObjectId.isValid(cartItemId)) {
+       return res.status(400).json({ message: "Invalid Cart Item ID", success: false });
+     }
+ 
+     // Find the user by ID (assuming middleware has set req.userId)
+     const userExist = await User.findById(req.userId);
+     if (!userExist) {
+       return res.status(400).json({ message: "User Not Found", success: false });
+     }
+ 
+     console.log("User found:", userExist._id);
+     console.log("User Cart:", userExist.cart);
+ 
+     // Find the index of the product in the cart
+     const productIndex = userExist.cart.findIndex(
+       (item) => item.product.toString() === cartItemId
+     );
+ 
+     if (productIndex === -1) {
+       return res.status(404).json({ message: "Product not found in cart", success: false });
+     }
+ 
+     console.log("Product found in cart, removing...");
+ 
+     // Remove the product from the cart
+     userExist.cart.splice(productIndex, 1);
+ 
+     // Save the updated user object
+     await userExist.save();
+ 
+     // Respond with success
+     res.status(200).json({
+       message: "Product removed from cart successfully",
+       cart: userExist.cart,
+       success: true
+     });
+   } catch (err) {
+     console.error("Error:", err.message);
+     res.status(500).json({ message: err.message, success: false });
+   }
+ };
+ 
+

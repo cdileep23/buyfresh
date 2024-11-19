@@ -46,11 +46,7 @@ const productSchema = new Schema({
         type: Types.ObjectId,
         ref: "User",
         required: true,
-      },
-      quantity: {
-        type: Number,
-        required: true,
-      },
+      }
     },
   ],
   farmLocation: String,

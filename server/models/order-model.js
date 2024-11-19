@@ -1,40 +1,40 @@
-import { Schema as _Schema, Types, model } from "mongoose";
+import { Schema as _Schema, Types, model } from 'mongoose';
 
 const Schema = _Schema;
 
 const orderSchema = new Schema({
-  products: [
-    {
-      product: {
-        type: Types.ObjectId,
-        required: true,
-        ref: "Product",
-      },
-      quantity: { type: Number, required: true },
-      status: { type: String, required: true },
-      sellerId: {
-        type: Types.ObjectId,
-        required: true,
-        ref: "Seller",
-      },
-    },
-  ],
-  userId: {
+  product: { // Single product for each order
     type: Types.ObjectId,
     required: true,
-    ref: "User",
+    ref: 'Product',
   },
-  userAddress: {
-    type: String,
-    required: true,
+  status: { 
+    type: String, 
+    required: true, 
+    default: 'Pending',
+    enum:["Pending", "Processing", "Delivered"] // Default status for a new order
   },
-  userName: {
-    type: String,
-    required: true,
+  sellerId: { 
+    type: Types.ObjectId, 
+    required: true, 
+    ref: 'Seller' 
   },
-  userPhoneNo: {
-    type: String,
-    required: true,
+  userId: { 
+    type: Types.ObjectId, 
+    required: true, 
+    ref: 'User' 
+  },
+  userAddress: { 
+    type: String, 
+    required: true, 
+  },
+  userName: { 
+    type: String, 
+    required: true, 
+  },
+  userPhoneNo: { 
+    type: String, 
+    required: true, 
   },
   walletAddress: { // Blockchain wallet address of the buyer
     type: String,
@@ -44,18 +44,18 @@ const orderSchema = new Schema({
     type: String,
     required: true,
   },
-  web3Id: {
-    type: String,
-    required: true,
+  web3Id: { 
+    type: String, 
+    required: true 
   },
-  paymentAmount: {
-    type: Number,
-    required: true,
+  paymentAmount: { 
+    type: Number, 
+    required: true 
   },
-  date: {
-    type: Date,
-    default: Date.now,
+  date: { 
+    type: Date, 
+    default: Date.now 
   },
 });
 
-export default model("Order", orderSchema);
+export default model('Order', orderSchema);

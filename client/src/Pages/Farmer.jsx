@@ -246,20 +246,129 @@ const FarmerDashboard = ({ onLogout }) => {
           </TabsContent>
 
           <TabsContent value="add-product">
-            <form onSubmit={handleAddProduct}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  required
-                  placeholder="Product Name"
-                  value={newProduct.productName}
-                  onChange={(e) => setNewProduct({...newProduct, productName: e.target.value})}
-                />
-                {/* Other form fields */}
-              </div>
-              <Button type="submit" className="mt-6 bg-green-600 hover:bg-green-700 text-white">
-                Add Product
-              </Button>
-            </form>
+          <form onSubmit={handleAddProduct} className="grid gap-4">
+                  {/* Image File Input */}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      setNewProduct((prev) => ({
+                        ...prev,
+                        imageFile: e.target.files[0],
+                      }))
+                    }
+                    className="border-gray-300 rounded-md"
+                  />
+
+                  {/* Product Details */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      type="text"
+                      placeholder="Product Type"
+                      value={newProduct.productType}
+                      onChange={(e) =>
+                        setNewProduct((prev) => ({
+                          ...prev,
+                          productType: e.target.value,
+                        }))
+                      }
+                      className="border-gray-300 rounded-md"
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Product Name"
+                      value={newProduct.productName}
+                      onChange={(e) =>
+                        setNewProduct((prev) => ({
+                          ...prev,
+                          productName: e.target.value,
+                        }))
+                      }
+                      className="border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <Input
+                    type="text"
+                    placeholder="Description"
+                    value={newProduct.description}
+                    onChange={(e) =>
+                      setNewProduct((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    className="border-gray-300 rounded-md"
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      type="date"
+                      placeholder="Product Packed Date"
+                      value={newProduct.productPacked}
+                      onChange={(e) =>
+                        setNewProduct((prev) => ({
+                          ...prev,
+                          productPacked: e.target.value,
+                        }))
+                      }
+                      className="border-gray-300 rounded-md"
+                    />
+                    <Input
+                      type="date"
+                      placeholder="Product Expiry Date"
+                      value={newProduct.productExpire}
+                      onChange={(e) =>
+                        setNewProduct((prev) => ({
+                          ...prev,
+                          productExpire: e.target.value,
+                        }))
+                      }
+                      className="border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <Input
+                    type="number"
+                    placeholder="Product Price"
+                    value={newProduct.productPrice}
+                    onChange={(e) =>
+                      setNewProduct((prev) => ({
+                        ...prev,
+                        productPrice: e.target.value,
+                      }))
+                    }
+                    className="border-gray-300 rounded-md"
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      type="text"
+                      placeholder="Web3 ID"
+                      value={newProduct.web3Id}
+                      onChange={(e) =>
+                        setNewProduct((prev) => ({
+                          ...prev,
+                          web3Id: e.target.value,
+                        }))
+                      }
+                      className="border-gray-300 rounded-md"
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Contract Address"
+                      value={newProduct.contractAddress}
+                      onChange={(e) =>
+                        setNewProduct((prev) => ({
+                          ...prev,
+                          contractAddress: e.target.value,
+                        }))
+                      }
+                      className="border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-green-600 text-white hover:bg-green-700">
+                    Add Product
+                  </Button>
+                </form>
           </TabsContent>
 
           <TabsContent value="orders">

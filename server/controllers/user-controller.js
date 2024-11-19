@@ -1,12 +1,12 @@
 // Register a new user
 import User from "../models/user-model.js";
+import orderModel from "../models/order-model.js";
 
 import bcrypt, { compareSync } from "bcrypt"
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cookie from "cookie"
-import orderModel from "../models/order-model.js";
 import { ObjectId } from "mongoose";
 
 
@@ -181,28 +181,40 @@ export const updateUserProfile = async (req, res) => {
   }
 };
 
-export const getAllOrder = async (req, res) => {
+
+export const getAllOrders = async (req, res) => {
   try {
-    // Get the userId from the middleware (it's assumed that req.userId is populated by the middleware)
+    // Get the userId from the middleware (assumed that req.userId is populated by the middleware)
     const userId = req.userId;
 
-    // Find orders for the user
-    const orders = await orderModel.find({ userId: userId })
-      .populate("products.product"); // Populate the product details
-
-    if (!orders || orders.length === 0) {
+    if (!userId) {
       return res.status(400).json({
-        message: "Empty Order",
+        message: "User ID is required"
+      });
+    }
+
+    // Find orders for the user and populate the product details
+    const orders = await orderModel.find({ userId: userId })
+      .populate("product") // Populate the product details if each order has one product
+
+    // Check if no orders found
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({
+        message: "No orders found for this user"
       });
     }
 
     // Respond with the orders
     return res.status(200).json({
+      success:true,
       orders,
     });
+
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Server error: " + err.message });
+    console.error(err);
+    return res.status(500).json({
+      message: "Server error: " + err.message
+    });
   }
 };
 
